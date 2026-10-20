@@ -1,3 +1,6 @@
+- Student name: Oak Soe Thaw
+- Student ID: 6726138
+  
 # Coursework — Next.js backend
 
 Built from the lecturer’s [required starter](https://github.com/pop2518hotmailcom/wad-final-2026-01), preserving its API routes, React context and application structure.
