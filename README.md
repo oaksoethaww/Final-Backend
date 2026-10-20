@@ -53,3 +53,9 @@ Production: `npm run build` then `npm start`. On Vercel, select the Next.js pres
 6. Sign out: protected requests return 401, including reuse of the revoked token.
 
 From the backend repository, run `npm run test:api` with a server running. Set `API_URL` to a deployed backend and `FRONTEND_ORIGIN` to its frontend origin to check production CORS. The suite creates clearly named verification courses; it reports their IDs. An occupied course cannot be deleted through the API, so its test record remains until the database owner cleans up those reported verification IDs.
+
+## Verified checks
+
+Both applications pass lint and production builds. The Atlas-backed local API and deployed API each passed 78 HTTP checks, including all six logins, ownership, concurrent enrollment, duplicate/capacity/status restrictions and CORS. The full browser workflow also passed on the deployed frontend: creation, enrollment, My learning, enrolled-student details, deletion restriction, Cancel update, refresh and mobile layout.
+
+Backend runtime and frontend dependency audits report zero advisories; five high advisories remain in backend development lint dependencies. Source and complete Git histories were checked for private environment values before publication.
