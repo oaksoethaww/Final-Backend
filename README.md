@@ -14,7 +14,8 @@ Teachers create and manage only their own courses, view enrolled students, and d
 - Backend deployment: https://cx4107-final-backend.vercel.app
 - Frontend deployment: https://cx4107-final-frontend.vercel.app
 - Screen recording: student will provide separately
-- Student name / ID: to be supplied by the student
+- Student name: Oak Soe Thaw
+- Student ID: 6726138
 
 ## Demo test accounts
 
