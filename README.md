@@ -1,26 +1,21 @@
-# Coursework — Online Course Service
+# Coursework — Next.js backend
 
-This repository contains the Next.js backend. When cloned separately, run its npm commands from the repository root; the directory names below refer to the original combined starter. The verification script is included in the backend repository.
+Built from the lecturer’s [required starter](https://github.com/pop2518hotmailcom/wad-final-2026-01), preserving its API routes, React context and application structure.
 
+Teachers create and manage only their own courses, view enrolled students, and delete only courses with no enrollments. Students search by course or teacher name, inspect courses, enroll, and view My learning. The backend enforces authentication, roles, ownership, status, capacity and enrollment uniqueness. A single atomic MongoDB update prevents overbooking and duplicate enrollment. Closed courses remain visible; canceled courses are hidden from students, including My learning. Logout revokes the account's active sessions.
 
-Student name: **Awaiting student input**  
-Student ID: **Awaiting student input**
+## Submission
 
-Built from `pop2518hotmailcom/wad-final-2026-01`, retaining its Next.js backend, React frontend, context provider and original API routes. New enrollment endpoint and shared validation helpers extend the provided architecture.
+- Backend repository: https://github.com/oaksoethaww/Final-Backend
+- Frontend repository: https://github.com/oaksoethaww/Final-Fronted
+- Backend deployment: https://cx4107-final-backend.vercel.app
+- Frontend deployment: https://cx4107-final-frontend.vercel.app
+- Screen recording: student will provide separately
+- Student name / ID: to be supplied by the student
 
-## Submission links
+## Demo test accounts
 
-| Deliverable | Link/status |
-| --- | --- |
-| Backend repository | Pending publication |
-| Frontend repository | Pending publication |
-| Backend deployment | Pending deployment |
-| Frontend deployment | Pending deployment |
-| Full screen + camera recording | Student must provide their actual recording link |
-
-## Test accounts
-
-These are intentionally published demonstration credentials, restricted to this examination application. Run the seed command before testing. Passwords are hashed with bcrypt in MongoDB.
+These credentials are intentionally supplied for examination testing.
 
 | Role | Username | Email | Password |
 | --- | --- | --- | --- |
@@ -31,58 +26,30 @@ These are intentionally published demonstration credentials, restricted to this 
 | Student | student2 | student2@coursework.test | Learn2026!Course |
 | Student | student3 | student3@coursework.test | Learn2026!Course |
 
-## Run locally
+## Backend setup
 
-Use Node.js 22.12+ or 24 and a reachable MongoDB instance (local or Atlas).
+Requires Node.js 22.12+ or 24 and MongoDB. From the backend repository root:
 
-1. `cd next-backend`, then `npm ci`.
-2. Copy `.env.example` to `.env.local`. Set `MONGODB_URI`, `MONGODB_DB`, a random `JWT_SECRET` of at least 32 characters, and `FRONTEND_URL=http://localhost:5173`.
-3. `npm run seed` creates the six accounts and sample courses without replacing existing records.
-4. `npm run dev -- --port 3000` starts the API.
-5. In another terminal, `cd react-frontend`, run `npm ci`, and copy `.env.example` to `.env.local` with `VITE_API_URL=http://localhost:3000`.
-6. `npm run dev -- --host 127.0.0.1 --port 5173`, then open http://localhost:5173.
+```sh
+npm ci
+cp .env.example .env.local
+# Set your private Atlas MONGODB_URI, MONGODB_DB=final_exam_2026,
+# a random JWT_SECRET of at least 32 characters, and FRONTEND_URL.
+npm run seed
+npm run dev
+```
 
-## Testing walkthrough
+The API runs at http://localhost:3000. The seed script creates the six demo accounts and three sample courses without replacing existing records. Passwords are bcrypt hashes in MongoDB. Never commit `.env.local`, Atlas credentials, or the JWT signing secret.
 
-1. Log in as teacher1. Only this teacher's courses appear. Create a course with multiple comma-separated topics, positive duration, price, capacity, and Open status.
-2. View its details and enrolled student list. Edit the course and verify saved values. Delete a course with zero students.
-3. Log in as teacher2: teacher1's courses are absent. Direct attempts to read, change, or delete another teacher's course return 403.
-4. Log in as student1. Search by part of a course name or teacher username. Open details and enroll in an Open course with available capacity. The course appears in My learning. Refresh the browser to verify session retention.
-5. Try enrolling again: duplicate enrollment is rejected. Use student2 and student3 to fill capacity; further enrollments are rejected.
-6. Log back in as the owning teacher: enrolled students are listed, deletion is rejected, and capacity cannot be reduced below enrollment.
-7. Set Close: students can still see the course but cannot enroll. Set Cancel: students cannot list, open, or enroll in it; the teacher retains access.
-8. Sign out. Protected API calls fail with 401, including reuse of the revoked token.
-9. Run `node scripts/verify-api.mjs (from the backend repository)` from this root with the backend running. Set `API_URL` to test another environment. This suite creates identifiable verification courses; an occupied canceled course is retained as audit evidence because deletion with enrollment is forbidden.
+Production: `npm run build` then `npm start`. On Vercel, select the Next.js preset and configure `MONGODB_URI`, `MONGODB_DB`, `JWT_SECRET`, and `FRONTEND_URL` (the frontend's exact origin). The Atlas network settings must permit the deployed backend to connect.
 
-## API
+## Test walkthrough
 
-All endpoints except login require `Authorization: Bearer <token>`. Invalid authentication returns 401; forbidden roles/ownership return 403; missing/hidden courses return 404; conflicting enrollment/capacity/deletion returns 409; malformed input returns 400. IDs and numerical fields are validated; ownership, teacher identity and enrollment counts are server controlled. Password hashes and other students' private data are never exposed to students.
+1. Sign in as teacher1. Create an Open course with a name, duration, multiple comma-separated topics, price, and maximum students. View and edit its details; delete an empty course.
+2. Sign in as teacher2. Teacher1's courses must not appear; the API rejects access to another teacher's course with 403.
+3. Sign in as student1. Search by part of the course name or teacher username, view details, enroll, and confirm the course in My learning. Refresh to verify session retention.
+4. Repeat enrollment: it must fail. Use student2 and student3 to fill capacity; further enrollments must fail. The owning teacher sees enrolled student names and emails, cannot reduce capacity below enrollment, and cannot delete an occupied course.
+5. Set Close as the owning teacher: the course remains visible to students but enrollment fails. Set Cancel: students cannot list, view or enroll in it; the owning teacher retains access.
+6. Sign out: protected requests return 401, including reuse of the revoked token.
 
-| Method | Route | Function |
-| --- | --- | --- |
-| POST | /api/auth/login | Authenticate with email or username and password |
-| POST | /api/auth/logout | Invalidate all current tokens for this account |
-| GET | /api/user | Current profile |
-| GET | /api/user/:user_id | Own profile only |
-| GET | /api/course | Role-filtered courses; `search` and `enrolled=true` filters |
-| POST | /api/course | Teacher creates course |
-| GET | /api/course/:course_id | Details; owning teacher additionally sees students |
-| PUT/PATCH | /api/course/:course_id | Owning teacher updates course |
-| DELETE | /api/course/:course_id | Owning teacher deletes only with zero enrollment |
-| POST | /api/course/:course_id/enroll | Student enrollment |
-
-Enrollment is stored as student ObjectIds in the course document. A single atomic conditional update checks Open status, available capacity and absence of this student before adding the enrollment. Concurrent enrollment, capacity updates and deletion therefore share one document boundary and require no multi-document transaction. Cancel courses are excluded from every student list, including My learning, in accordance with the status restriction.
-
-## Deploy to Vercel
-
-Create separate projects using `next-backend` (Next.js) and `react-frontend` (Vite) as their root directories. Set backend `MONGODB_URI`, `MONGODB_DB`, `JWT_SECRET`, and `FRONTEND_URL` to the deployed frontend origin. Set frontend `VITE_API_URL` to the deployed backend origin, then rebuild the frontend. Allow the deployment's MongoDB connection in your database network configuration. Run the seed script against the same database. Disable Vercel deployment authentication for the submitted production URLs so the lecturer can access them.
-
-Never commit database connection credentials, JWT signing secrets, `.env.local`, `.vercel`, node_modules, or build outputs. The screen recording must be captured by the student throughout the actual examination; this project cannot reconstruct it.
-
-## Verification results
-
-- 43 HTTP assertions passed against an isolated local MongoDB instance, including authentication, roles, ownership, validation, title/teacher search, status visibility, duplicate prevention, atomic last-seat concurrency, forbidden deletion, and revoked-token rejection.
-- Browser login for both roles, session persistence after refresh, mobile layout without horizontal overflow, and no page-level JavaScript exceptions passed.
-- Both applications passed ESLint and production build checks. The backend uses Webpack to avoid this machine's Turbopack worker-port restriction.
-- Frontend dependency audit: zero advisories after compatible fixes. Backend: Next.js updated to 16.4.2 to address critical advisories; five high development-lint dependency advisories remain.
-- Remote database seeding, repository publication, and live deployment have not yet completed. They require the outstanding explicit authorizations and a renewed Vercel session.
+From the backend repository, run `npm run test:api` with a server running. Set `API_URL` to a deployed backend and `FRONTEND_ORIGIN` to its frontend origin to check production CORS. The suite creates clearly named verification courses; it reports their IDs. An occupied course cannot be deleted through the API, so its test record remains until the database owner cleans up those reported verification IDs.
